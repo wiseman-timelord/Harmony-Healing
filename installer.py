@@ -9,14 +9,14 @@ import configparser  # stdlib only — no project imports in this file
 
 def print_header(text):
     print("=" * 80)
-    print(f"    Harmonic-Healer : {text}")
+    print(f"    Harmony-Healing : {text}")
     print("=" * 80)
 
 def menu():
     print_header("Installation")
     print("    1. Purge Install  (remove venv, reinstall everything)")
     print("    2. Check / Install  (fix broken or missing packages)")
-    print("    3. Replace JSON  (reset persistent.json to defaults: 884×522)")
+    print("    3. Replace JSON  (reset persistent + viral/fungal/healing defaults)")
     print("=" * 80)
     choice = input("Selection; Menu Options = 1-3, Abandon Install = A: ")
     return choice.strip().upper()
@@ -287,47 +287,56 @@ def ensure_package_init():
     if not os.path.exists(init_path):
         os.makedirs("scripts", exist_ok=True)
         with open(init_path, "w", encoding="utf-8") as f:
-            f.write("# Harmonic-Healer scripts package\n")
+            f.write("# Harmony-Healing scripts package\n")
 
 # ---------------------------------------------------------------------------
 # JSON config helper — STANDALONE, no project-module imports.
-#
-# *** IMPORTANT: keep _DEFAULTS below in sync with configure.py._DEFAULTS ***
-# Window defaults must match: 884 × 522
-# Heal keys must match: heal_volume, heal_timelength_steps
+# Creates persistent.json (window) + viral.json + fungal.json + healing.json
 # ---------------------------------------------------------------------------
 def create_json() -> bool:
     """
-    Regenerate data/persistent.json with hardcoded defaults.
+    Regenerate data/*.json defaults.
     Standalone — does NOT import from scripts.configure.
-    Window size is 884 × 522 (matches configure.py and the menu text above).
     """
-    _DEFAULTS = {
-        "last_freq":              432,
-        "volume":                 0.5,
-        "waveform":               "sine",   # kept for file-compatibility; always sine
-        "duration":               60,       # legacy field — kept for compatibility
-        "harmonic_multiplier":    11,
-        "window_width":           884,      # ← must match configure.py._DEFAULTS
-        "window_height":          522,      # ← must match configure.py._DEFAULTS
-        # ── Harmonic tab playback controls ──────────────────────────────────
-        "timelength_steps":       1,        # 1 step = 15 min (range 1-12)
-        "play_mode":              "single", # "single" | "subset"
-        # ── Healing tab controls ─────────────────────────────────────────────
-        "heal_volume":            0.5,      # ← must match configure.py._DEFAULTS
-        "heal_timelength_steps":  1,        # ← must match configure.py._DEFAULTS
+    persistent = {
+        "window_width": 884,
+        "window_height": 522,
+        "harmonic_multiplier": 11,
+    }
+    viral = {
+        "last_freq": 432,
+        "volume": 50,           # UI 10–100
+        "duration_index": 0,    # → 15 min
+        "play_mode": "single",
+    }
+    fungal = {
+        "last_freq": 464,
+        "volume": 50,
+        "duration_index": 0,
+        "play_mode": "single",
+    }
+    healing = {
+        "last_freq": 396,
+        "volume": 50,
+        "duration_index": 0,
+        "play_mode": "single",
     }
 
-    config_path = os.path.join("data", "persistent.json")
     try:
-        os.makedirs(os.path.dirname(config_path), exist_ok=True)
-        with open(config_path, "w", encoding="utf-8") as f:
-            json.dump(_DEFAULTS, f, indent=4)
-        print("✓ JSON created: data/persistent.json")
-        print(f"  window_width:          {_DEFAULTS['window_width']}")
-        print(f"  window_height:         {_DEFAULTS['window_height']}")
-        print(f"  heal_volume:           {_DEFAULTS['heal_volume']}")
-        print(f"  heal_timelength_steps: {_DEFAULTS['heal_timelength_steps']}")
+        os.makedirs("data", exist_ok=True)
+        files = {
+            "persistent.json": persistent,
+            "viral.json": viral,
+            "fungal.json": fungal,
+            "healing.json": healing,
+        }
+        for name, data in files.items():
+            path = os.path.join("data", name)
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=4)
+            print(f"✓ JSON created: data/{name}")
+        print(f"  window: {persistent['window_width']}×{persistent['window_height']}")
+        print(f"  volume default: 50 (0.50 gain)  duration default: 15 min")
         return True
     except Exception as exc:
         print(f"ERROR: Could not create JSON config: {exc}")
@@ -340,7 +349,7 @@ def create_runtime_env_file(cpu_features: dict):
     """
     if not cpu_features.get('x86_64_v2'):
         env_content = (
-            "# Harmonic-Healer Runtime Environment (Legacy CPU Mode)\n"
+            "# Harmony-Healing Runtime Environment (Legacy CPU Mode)\n"
             "NPY_DISABLE_CPU_FEATURES=AVX,AVX2,AVX512F,AVX512_CD,"
             "AVX512_KNL,AVX512_KNM,AVX512_SKX,AVX512_CLX,"
             "AVX512_CNL,AVX512_ICL\n"

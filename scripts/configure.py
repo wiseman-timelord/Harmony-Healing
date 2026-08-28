@@ -1,5 +1,6 @@
 """
-configure.py – Global configuration, constants, and hardware detection.
+configure.py – Global configuration, constants, frequency databases, and hardware detection.
+Harmony-Healing
 """
 import json
 import os
@@ -10,21 +11,32 @@ import configparser
 # =============================================================================
 # APP CONSTANTS
 # =============================================================================
-APP_TITLE = "Harmonic-Healer"
+APP_TITLE = "Harmony-Healing"
 
-# Absolute path — resolves to <project_root>/data/persistent.json
-# regardless of the working directory at launch time.
 _SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 _BASE_DIR    = os.path.dirname(_SCRIPTS_DIR)
-CONFIG_PATH  = os.path.join(_BASE_DIR, "data", "persistent.json")
-CONSTANTS_INI_PATH = os.path.join(_BASE_DIR, "data", "constants.ini")
+DATA_DIR     = os.path.join(_BASE_DIR, "data")
+
+CONFIG_PATH          = os.path.join(DATA_DIR, "persistent.json")   # window size, global
+VIRAL_CONFIG_PATH    = os.path.join(DATA_DIR, "viral.json")
+FUNGAL_CONFIG_PATH   = os.path.join(DATA_DIR, "fungal.json")
+HEALING_CONFIG_PATH  = os.path.join(DATA_DIR, "healing.json")
+CONSTANTS_INI_PATH   = os.path.join(DATA_DIR, "constants.ini")
 
 DEFAULT_HARMONIC_MULTIPLIER = 11
-# Only sine wave is supported — required for accurate resonance output.
 WAVEFORM_OPTIONS = ["sine"]
 
+# Discrete duration options (minutes) — slider index 0..5
+DURATION_OPTIONS = [15, 30, 60, 90, 120, 180]
+
+# Volume: UI shows 10..100 step 10; audio uses value/100
+VOLUME_MIN = 10
+VOLUME_MAX = 100
+VOLUME_STEP = 10
+VOLUME_DEFAULT = 50   # → 0.50 gain
+
 # =============================================================================
-# VIRUS FREQUENCY DATABASE
+# VIRUS / ANTI-VIRAL FREQUENCY DATABASE
 # =============================================================================
 FREQUENCY_DATA = [
     {"label": "Cancer – generic lower band (Holland)",  "base": 100000},
@@ -128,12 +140,9 @@ FREQUENCY_DATA = [
 ]
 
 # =============================================================================
-# FUNGUS FREQUENCY DATABASE
-# Sourced from Rife CAFL, Hulda Clark, and bioresonance databases.
-# The app generates the 11th harmonic (base * 11) for output.
+# FUNGUS / ANTI-FUNGAL FREQUENCY DATABASE
 # =============================================================================
 FUNGUS_FREQUENCY_DATA = [
-    # === Candida albicans (common yeast infection) ===
     {"label": "Candida albicans – Clark primary",  "base": 386000},
     {"label": "Candida albicans – Clark low",  "base": 384200},
     {"label": "Candida albicans – Clark high",  "base": 388400},
@@ -142,48 +151,39 @@ FUNGUS_FREQUENCY_DATA = [
     {"label": "Candida albicans – Rife general 3",  "base": 1550},
     {"label": "Candida albicans – Rife general 4",  "base": 2128},
     {"label": "Candida albicans – Rife general 5",  "base": 3375},
-    # === Aspergillus niger (black mold) ===
     {"label": "Aspergillus niger – Rife primary",  "base": 374},
     {"label": "Aspergillus niger – Rife secondary",  "base": 697},
     {"label": "Aspergillus niger – Clark derived",  "base": 288000},
     {"label": "Aspergillus niger – Bioresonance set 1",  "base": 1823},
     {"label": "Aspergillus niger – Bioresonance set 2",  "base": 2411},
-    # === Aspergillus flavus (aflatoxin-producing mold) ===
     {"label": "Aspergillus flavus – Rife primary",  "base": 374},
     {"label": "Aspergillus flavus – Rife secondary",  "base": 414},
     {"label": "Aspergillus flavus – Clark aflatoxin",  "base": 177000},
     {"label": "Aspergillus flavus – Clark aflatoxin alt",  "base": 188000},
     {"label": "Aspergillus flavus – Bioresonance",  "base": 1333},
-    # === Aspergillus fumigatus (lung-infecting mold) ===
     {"label": "Aspergillus fumigatus – Rife primary",  "base": 374},
     {"label": "Aspergillus fumigatus – Rife secondary",  "base": 743},
     {"label": "Aspergillus fumigatus – Bioresonance 1",  "base": 2411},
     {"label": "Aspergillus fumigatus – Bioresonance 2",  "base": 4442},
     {"label": "Aspergillus fumigatus – Clark derived",  "base": 295000},
-    # === Aspergillus glaucus (blue mold) ===
     {"label": "Aspergillus glaucus – Rife primary",  "base": 337},
     {"label": "Aspergillus glaucus – Rife secondary",  "base": 555},
     {"label": "Aspergillus glaucus – Bioresonance",  "base": 1155},
-    # === Aspergillus terreus (bronchial mold) ===
     {"label": "Aspergillus terreus – Rife primary",  "base": 339},
     {"label": "Aspergillus terreus – Rife secondary",  "base": 743},
     {"label": "Aspergillus terreus – Bioresonance",  "base": 1833},
-    # === Mucor species (bread mold / opportunistic pathogen) ===
     {"label": "Mucor mucedo – Clark primary",  "base": 288000},
     {"label": "Mucor racemosus – Rife derived",  "base": 2140},
     {"label": "Mucor plumbeus – Rife derived",  "base": 1510},
     {"label": "Mucor general – Bioresonance",  "base": 942},
-    # === Penicillium species (common indoor mold) ===
     {"label": "Penicillium rubrum – Bioresonance",  "base": 1016},
     {"label": "Penicillium general – Rife set 1",  "base": 321},
     {"label": "Penicillium general – Rife set 2",  "base": 592},
     {"label": "Penicillium general – Rife set 3",  "base": 866},
-    # === Trichophyton / Dermatophytes (skin/nail fungi) ===
     {"label": "Trichophyton mentagrophytes – Rife",  "base": 344},
     {"label": "Trichophyton rubrum – Rife",  "base": 464},
     {"label": "Dermatophyte general – Bioresonance",  "base": 774},
     {"label": "Dermatophyte general – Clark derived",  "base": 254000},
-    # === General mold/fungus broad-spectrum frequencies ===
     {"label": "Mold general – Rife low band",  "base": 132},
     {"label": "Mold general – Rife mid band 1",  "base": 242},
     {"label": "Mold general – Rife mid band 2",  "base": 374},
@@ -194,7 +194,6 @@ FUNGUS_FREQUENCY_DATA = [
     {"label": "Mold general – Rife ultra band 1",  "base": 1823},
     {"label": "Mold general – Rife ultra band 2",  "base": 2411},
     {"label": "Mold general – Rife ultra band 3",  "base": 4442},
-    # === Mold toxin / mycotoxin frequencies (Clark) ===
     {"label": "Mycotoxin general – Clark sterigmatocystin 1",  "base": 88000},
     {"label": "Mycotoxin general – Clark sterigmatocystin 2",  "base": 96000},
     {"label": "Mycotoxin general – Clark sterigmatocystin 3",  "base": 126000},
@@ -202,7 +201,6 @@ FUNGUS_FREQUENCY_DATA = [
     {"label": "Mycotoxin – Clark zearalenone",  "base": 100000},
     {"label": "Mycotoxin – Clark cytochalasin B 1",  "base": 77000},
     {"label": "Mycotoxin – Clark cytochalasin B 2",  "base": 91000},
-    # === Slime molds (Clark) ===
     {"label": "Slime mold – Arcyria",  "base": 81000},
     {"label": "Slime mold – Lycogala",  "base": 126000},
     {"label": "Slime mold – Stemonitis",  "base": 211000},
@@ -210,21 +208,14 @@ FUNGUS_FREQUENCY_DATA = [
 
 # =============================================================================
 # HEALING FREQUENCY DATABASE
-# Pure-sine, single-tone presets for the Healing tab.
-# Sources: Solfeggio tradition, sacred-number systems, Schumann resonance,
-# and neuroscience brainwave-band conventions.
-# No harmonic blending is applied — the selected frequency plays alone.
-# Brainwave bands use a representative centre frequency for the range.
 # =============================================================================
 HEALING_FREQUENCY_DATA = [
-    # ── Core Sacred Set ───────────────────────────────────────────────────────
     {"group": "Core Sacred", "label": "Release",        "base": 396,
      "desc": "Clears fear, guilt, and heaviness — one of the most cited Solfeggio tones"},
     {"group": "Core Sacred", "label": "Connection",     "base": 639,
      "desc": "Harmony and relationships — used widely for social and emotional themes"},
     {"group": "Core Sacred", "label": "Unity",          "base": 963,
      "desc": "Awareness, meditation, and divine connection — the highest Solfeggio tone"},
-    # ── Traditional Solfeggio ─────────────────────────────────────────────────
     {"group": "Solfeggio",   "label": "Foundation",     "base": 174,
      "desc": "Grounding and comfort — widely included in modern 9-tone Solfeggio lists"},
     {"group": "Solfeggio",   "label": "Repair",         "base": 285,
@@ -243,7 +234,6 @@ HEALING_FREQUENCY_DATA = [
      "desc": "Insight and inner balance — Solfeggio LA tone"},
     {"group": "Solfeggio",   "label": "Unity",          "base": 963,
      "desc": "Awareness, meditation, and spiritual focus — Solfeggio TI tone"},
-    # ── Angel Numbers ─────────────────────────────────────────────────────────
     {"group": "Angel Numbers", "label": "Alignment",    "base": 111,
      "desc": "Meditation and focus — 111 alignment frequency"},
     {"group": "Angel Numbers", "label": "Balance",      "base": 222,
@@ -262,11 +252,8 @@ HEALING_FREQUENCY_DATA = [
      "desc": "Flow, completion, and prosperity — 888 abundance frequency"},
     {"group": "Angel Numbers", "label": "Closure",      "base": 999,
      "desc": "Completion and release — 999 closure frequency"},
-    # ── Earth / Schumann ──────────────────────────────────────────────────────
     {"group": "Earth",       "label": "Schumann",       "base": 7.83,
      "desc": "Schumann resonance — relaxation and grounding; often used in meditation audio"},
-    # ── Brainwave Bands (centre-frequency representatives) ────────────────────
-    # These are band ranges, not single tones; the value here is the band centre.
     {"group": "Brainwave",   "label": "Delta",          "base": 2,
      "desc": "Deep rest — centre of 0.5–4 Hz delta band; sleepy, restorative ambience"},
     {"group": "Brainwave",   "label": "Theta",          "base": 6,
@@ -278,15 +265,9 @@ HEALING_FREQUENCY_DATA = [
 ]
 
 # =============================================================================
-# HARDWARE CONSTANTS  (gathered once at import time)
-# Available throughout the app as:  from scripts.configure import constants
+# HARDWARE CONSTANTS
 # =============================================================================
 def _read_constants_ini() -> dict | None:
-    """
-    Attempt to read data/constants.ini written by the installer.
-    Returns a populated dict on success, or None if the file is absent/corrupt.
-    Using the INI avoids WMIC/ctypes calls on every program launch.
-    """
     if not os.path.exists(CONSTANTS_INI_PATH):
         return None
     try:
@@ -296,31 +277,23 @@ def _read_constants_ini() -> dict | None:
             return None
         s = cfg["system"]
         return {
-            "cpu_name":        s.get("cpu_name",         "unknown"),
-            "cpu_count":       int(s.get("cpu_count",    str(os.cpu_count() or 0))),
-            "total_ram_gb":    int(s.get("total_ram_gb", "0")),
-            "windows_version": s.get("windows_version",  "unknown"),
-            "python_version":  s.get("python_version",   "unknown"),
-            "webview2_version":s.get("webview2_version", "unknown"),
-            "app_dir":         s.get("app_dir",           _BASE_DIR),
+            "cpu_name":         s.get("cpu_name",         "unknown"),
+            "cpu_count":        int(s.get("cpu_count",    str(os.cpu_count() or 0))),
+            "total_ram_gb":     int(s.get("total_ram_gb", "0")),
+            "windows_version":  s.get("windows_version",  "unknown"),
+            "python_version":   s.get("python_version",   "unknown"),
+            "webview2_version": s.get("webview2_version", "unknown"),
+            "app_dir":          s.get("app_dir",           _BASE_DIR),
         }
     except Exception:
         return None
 
 
 def _gather_hw_constants() -> dict:
-    """
-    Return hardware/runtime info for the Info tab.
-    Prefers data/constants.ini (written by the installer) so that no
-    WMIC/ctypes calls are needed at runtime.  Falls back to live detection
-    if the INI is absent (e.g. first launch before installer has been run).
-    """
-    # ── Fast path: read from installer-generated INI ──────────────────────
     ini = _read_constants_ini()
     if ini is not None:
         return ini
 
-    # ── Slow path: detect at runtime (installer not yet run) ─────────────
     hw: dict = {
         "cpu_name":         "unknown",
         "cpu_count":        os.cpu_count() or 0,
@@ -331,12 +304,11 @@ def _gather_hw_constants() -> dict:
         "app_dir":          _BASE_DIR,
     }
 
-    # ── CPU name via WMIC ─────────────────────────────────────────────────
     try:
         r = subprocess.run(
             ["wmic", "cpu", "get", "Name"],
             capture_output=True, text=True, timeout=5,
-            creationflags=0x08000000,   # CREATE_NO_WINDOW
+            creationflags=0x08000000,
         )
         if r.returncode == 0:
             names = [
@@ -348,7 +320,6 @@ def _gather_hw_constants() -> dict:
     except Exception:
         pass
 
-    # ── Total physical RAM via ctypes / GlobalMemoryStatusEx ─────────────
     try:
         import ctypes
 
@@ -372,13 +343,11 @@ def _gather_hw_constants() -> dict:
     except Exception:
         pass
 
-    # ── Windows build string ──────────────────────────────────────────────
     try:
         hw["windows_version"] = platform.version()
     except Exception:
         pass
 
-    # ── WebView2 runtime version from registry (best-effort) ─────────────
     try:
         import winreg
         WEBVIEW2_GUID = "{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"
@@ -388,7 +357,7 @@ def _gather_hw_constants() -> dict:
             (winreg.HKEY_LOCAL_MACHINE,
              rf"SOFTWARE\Microsoft\EdgeUpdate\Clients\{WEBVIEW2_GUID}"),
             (winreg.HKEY_CURRENT_USER,
-             rf"SOFTWARE\Microsoft\EdgeUpdate\Clients\{WEBVIEW2_GUID}"),
+             rf"SOFTWARE\EdgeUpdate\Clients\{WEBVIEW2_GUID}"),
         ]
         for hive, path in reg_paths:
             try:
@@ -405,60 +374,213 @@ def _gather_hw_constants() -> dict:
 
     return hw
 
-# Populated once at import time; reference via configure.constants
 constants: dict = _gather_hw_constants()
 
 # =============================================================================
-# DEFAULT CONFIG VALUES
+# PAGE CONFIG DEFAULTS
 # =============================================================================
-_DEFAULTS = {
-    "last_freq":              432,
-    "volume":                 0.5,
-    "waveform":               "sine",   # kept for file-compatibility; always sine
-    "duration":               60,       # legacy field — kept for compatibility
-    "harmonic_multiplier":    DEFAULT_HARMONIC_MULTIPLIER,
-    "window_width":           884,
-    "window_height":          522,
-    # ── Harmonic tab playback controls ──
-    "timelength_steps":       1,        # 1 step = 15 min  (range 1-12 → 15-180 min)
-    "play_mode":              "single", # "single" | "subset"
-    # ── Healing tab controls ──
-    "heal_volume":            0.5,
-    "heal_timelength_steps":  1,        # same step scale as harmonic tab
+_PERSISTENT_DEFAULTS = {
+    "window_width":  884,
+    "window_height": 522,
+    "harmonic_multiplier": DEFAULT_HARMONIC_MULTIPLIER,
 }
 
-# =============================================================================
-# CONFIG I/O
-# =============================================================================
-def create_default_config():
-    """Write a fresh default config and return it."""
-    os.makedirs(os.path.dirname(CONFIG_PATH), exist_ok=True)
-    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
-        json.dump(_DEFAULTS, f, indent=4)
-    return dict(_DEFAULTS)
+_VIRAL_DEFAULTS = {
+    "last_freq":        432,
+    "volume":           VOLUME_DEFAULT,   # 10–100
+    "duration_index":   0,                # → DURATION_OPTIONS[0] = 15 min
+    "play_mode":        "single",         # "single" | "subset"
+}
+
+_FUNGAL_DEFAULTS = {
+    "last_freq":        464,
+    "volume":           VOLUME_DEFAULT,
+    "duration_index":   0,
+    "play_mode":        "single",
+}
+
+_HEALING_DEFAULTS = {
+    "last_freq":        396,
+    "volume":           VOLUME_DEFAULT,
+    "duration_index":   0,
+    "play_mode":        "single",         # "single" | "subset" (by group)
+}
+
+
+def _ensure_data_dir():
+    os.makedirs(DATA_DIR, exist_ok=True)
+
+
+def _load_json(path: str, defaults: dict) -> dict:
+    _ensure_data_dir()
+    if not os.path.exists(path):
+        data = dict(defaults)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=4)
+        return data
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        changed = False
+        for k, v in defaults.items():
+            if k not in data:
+                data[k] = v
+                changed = True
+        if changed:
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=4)
+        return data
+    except Exception:
+        data = dict(defaults)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=4)
+        return data
+
+
+def _save_json(path: str, data: dict):
+    _ensure_data_dir()
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4)
 
 
 def load_config():
-    """Load config from disk. Missing/corrupt → recreate. Missing keys → fill."""
-    if not os.path.exists(CONFIG_PATH):
-        return create_default_config()
-    try:
-        with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        changed = False
-        for key, default_val in _DEFAULTS.items():
-            if key not in data:
-                data[key] = default_val
-                changed = True
-        if changed:
-            save_config(data)
-        return data
-    except Exception:
-        return create_default_config()
+    """Load persistent (window) config. Missing keys filled from defaults."""
+    return _load_json(CONFIG_PATH, _PERSISTENT_DEFAULTS)
 
 
 def save_config(data):
-    """Persist config dict to disk."""
-    os.makedirs(os.path.dirname(CONFIG_PATH), exist_ok=True)
-    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=4)
+    _save_json(CONFIG_PATH, data)
+
+
+def load_viral_config():
+    return _load_json(VIRAL_CONFIG_PATH, _VIRAL_DEFAULTS)
+
+
+def save_viral_config(data):
+    _save_json(VIRAL_CONFIG_PATH, data)
+
+
+def load_fungal_config():
+    return _load_json(FUNGAL_CONFIG_PATH, _FUNGAL_DEFAULTS)
+
+
+def save_fungal_config(data):
+    _save_json(FUNGAL_CONFIG_PATH, data)
+
+
+def load_healing_config():
+    return _load_json(HEALING_CONFIG_PATH, _HEALING_DEFAULTS)
+
+
+def save_healing_config(data):
+    _save_json(HEALING_CONFIG_PATH, data)
+
+
+def create_default_configs():
+    """Create all default JSON files (used by installer)."""
+    load_config()
+    load_viral_config()
+    load_fungal_config()
+    load_healing_config()
+    return True
+
+
+def duration_minutes_from_index(idx: int) -> int:
+    idx = max(0, min(len(DURATION_OPTIONS) - 1, int(idx)))
+    return DURATION_OPTIONS[idx]
+
+
+def volume_gain_from_ui(ui_vol: int | float) -> float:
+    """Map 10–100 UI volume to 0.10–1.00 gain."""
+    v = max(VOLUME_MIN, min(VOLUME_MAX, float(ui_vol)))
+    return v / 100.0
+
+
+# =============================================================================
+# AUDIO DEVICE DIAGNOSTICS
+# =============================================================================
+def print_audio_diagnostics():
+    """
+    Query PortAudio / sounddevice and print device list + default output.
+    Returns the default output device index (or None on failure).
+    """
+    try:
+        import sounddevice as sd
+    except ImportError:
+        print("[Audio] sounddevice not available — cannot list devices.")
+        return None
+
+    print("-" * 60)
+    print("[Audio] -- Device diagnostics --")
+    try:
+        print(f"[Audio] PortAudio: {sd.get_portaudio_version()}")
+    except Exception as e:
+        print(f"[Audio] PortAudio version unavailable: {e}")
+
+    try:
+        default = sd.default.device
+        print(f"[Audio] sd.default.device = {default}")
+    except Exception:
+        default = [None, None]
+        print("[Audio] sd.default.device = unknown")
+
+    # Resolve default OUTPUT index
+    out_idx = None
+    if isinstance(default, (list, tuple)) and len(default) >= 2:
+        out_idx = default[1]
+    elif isinstance(default, int):
+        out_idx = default
+
+    devices = []
+    try:
+        devices = sd.query_devices()
+    except Exception as e:
+        print(f"[Audio] query_devices failed: {e}")
+        print("[Audio] -- End diagnostics --")
+        print("-" * 60)
+        return None
+
+    # Print default output summary
+    if out_idx is not None and 0 <= out_idx < len(devices):
+        d = devices[out_idx]
+        name = d.get("name", "?")
+        hostapi = d.get("hostapi", "?")
+        try:
+            host_name = sd.query_hostapis(hostapi).get("name", str(hostapi))
+        except Exception:
+            host_name = str(hostapi)
+        print(f"[Audio] Default OUTPUT -> index={out_idx}  name='{name}'  hostapi={host_name}")
+    else:
+        print(f"[Audio] Default OUTPUT -> index={out_idx}  (unresolved)")
+
+    # List all devices that have output channels
+    out_devs = []
+    for i, d in enumerate(devices):
+        if d.get("max_output_channels", 0) > 0:
+            out_devs.append((i, d))
+
+    print(f"[Audio] {len(out_devs)} output device(s):")
+    for i, d in out_devs:
+        ch = d.get("max_output_channels", 0)
+        sr = int(d.get("default_samplerate", 0) or 0)
+        name = d.get("name", "?")
+        mark = "  <-- DEFAULT" if i == out_idx else ""
+        print(f"[Audio]   [{i}] {name}  ({ch} ch, {sr} Hz){mark}")
+
+    print("[Audio] -- End diagnostics --")
+    print("-" * 60)
+    return out_idx
+
+
+def get_default_output_device():
+    """Return current default output device index, or None."""
+    try:
+        import sounddevice as sd
+        default = sd.default.device
+        if isinstance(default, (list, tuple)) and len(default) >= 2:
+            return default[1]
+        if isinstance(default, int):
+            return default
+    except Exception:
+        pass
+    return None

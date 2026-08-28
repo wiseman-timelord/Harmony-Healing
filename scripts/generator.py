@@ -8,13 +8,14 @@ operation.
 
 Two playback modes are supported:
   - Harmonic mode  (play_harmonic=True):  base sine + (base × harmonic_mult) sine,
-                                          mixed at equal amplitude — the Harmonic tab.
-  - Healing  mode  (play_harmonic=False): base sine only, full amplitude — the
-                                          Healing tab.
+                                          mixed at equal amplitude — Anti-Viral / Anti-Fungal.
+  - Healing  mode  (play_harmonic=False): base sine only, full amplitude — Healing tab.
 """
 import numpy as np
 import sounddevice as sd
 import math
+
+from . import configure
 
 TWO_PI = 2.0 * math.pi
 
@@ -31,18 +32,15 @@ class SoundGenerator:
     def __init__(self):
         self.active           = False
         self.stream           = None
-        self.samplerate       = 44100       # Standard CD quality
+        self.samplerate       = 44100
         self.current_freq     = 0.0
         self.current_harmonic = 11
         self.volume           = 0.5
-        self.play_harmonic    = True        # False = healing / pure-tone mode
-        # Phase accumulators in RADIANS (mod 2π) — prevents unbounded growth
+        self.play_harmonic    = True
+        self.device           = None   # None = system default
         self.phase_base       = 0.0
         self.phase_harm       = 0.0
 
-    # ──────────────────────────────────────────────────────────────────────────
-    #   PortAudio real-time callback
-    # ──────────────────────────────────────────────────────────────────────────
     def _callback(self, outdata: np.ndarray, frames: int, time_info, status):
         if not self.active:
             outdata.fill(0)
@@ -52,43 +50,43 @@ class SoundGenerator:
         frame_idx   = np.arange(frames, dtype=np.float64)
         dt          = 1.0 / self.samplerate
 
-        # Base sine wave
         phases_base = self.phase_base + omega_base * frame_idx * dt
         wave_base   = np.sin(phases_base)
         self.phase_base = (self.phase_base + omega_base * frames * dt) % TWO_PI
 
         if self.play_harmonic:
-            # Blend base + Nth harmonic at equal weight — Harmonic tab mode
             omega_harm  = omega_base * self.current_harmonic
             phases_harm = self.phase_harm + omega_harm * frame_idx * dt
             wave_harm   = np.sin(phases_harm)
             self.phase_harm = (self.phase_harm + omega_harm * frames * dt) % TWO_PI
             wave = (wave_base + wave_harm) * 0.5 * self.volume
         else:
-            # Pure base sine only — Healing tab mode
             self.phase_harm = 0.0
             wave = wave_base * self.volume
 
-        outdata[:, 0] = wave.astype(np.float32)
+        # Mono stream; if stereo device requested, callback still gets 1-ch buffer
+        # because we open with channels=1.  Duplicate if outdata has more channels.
+        ch = outdata.shape[1] if outdata.ndim > 1 else 1
+        if ch == 1:
+            outdata[:, 0] = wave.astype(np.float32)
+        else:
+            for c in range(ch):
+                outdata[:, c] = wave.astype(np.float32)
 
-    # ──────────────────────────────────────────────────────────────────────────
-    #   Public interface
-    # ──────────────────────────────────────────────────────────────────────────
     def start_stream(self, freq_base: float, harmonic_mult: int = 11,
-                     volume: float = 0.5, play_harmonic: bool = True):
-        """Begin audio output.
+                     volume: float = 0.5, play_harmonic: bool = True,
+                     device=None):
+        """Begin audio output on the (re-detected) default Windows output device.
 
         Args:
             freq_base:      Base frequency in Hz.
             harmonic_mult:  Harmonic multiplier (default 11).  Ignored when
                             play_harmonic is False.
             volume:         Output gain in [0.0, 1.0].
-            play_harmonic:  True  → base + harmonic sine blend (Harmonic tab).
-                            False → base sine only (Healing tab).
-
-        Note:
-            Frequencies above 20 kHz are ultrasound; standard speakers will be
-            silent.  Use RF/plasma equipment for those ranges.
+            play_harmonic:  True  → base + harmonic sine blend.
+                            False → base sine only (Healing).
+            device:         Optional explicit device index.  If None, the
+                            current system default output is used.
         """
         if freq_base > 20000:
             print(
@@ -104,7 +102,11 @@ class SoundGenerator:
         self.phase_base       = 0.0
         self.phase_harm       = 0.0
 
-        # Close any existing stream cleanly before opening a new one
+        # Re-detect default output so user can switch devices between runs
+        if device is None:
+            device = configure.get_default_output_device()
+        self.device = device
+
         if self.stream is not None:
             try:
                 self.stream.stop()
@@ -113,15 +115,31 @@ class SoundGenerator:
                 pass
             self.stream = None
 
+        # Prefer device's default sample rate when available
         try:
-            self.stream = sd.OutputStream(
+            if device is not None:
+                info = sd.query_devices(device)
+                sr = int(info.get("default_samplerate") or 44100)
+                if sr > 0:
+                    self.samplerate = sr
+        except Exception:
+            self.samplerate = 44100
+
+        try:
+            kwargs = dict(
                 samplerate=self.samplerate,
                 channels=1,
                 callback=self._callback,
                 dtype="float32",
                 blocksize=1024,
             )
+            if device is not None:
+                kwargs["device"] = device
+            self.stream = sd.OutputStream(**kwargs)
             self.stream.start()
+            dev_label = device if device is not None else "system default"
+            print(f"[Audio] Stream started on device={dev_label}  "
+                  f"sr={self.samplerate}  freq={freq_base:.2f} Hz")
         except Exception as exc:
             print(f"Audio Stream Error: {exc}")
             self.active = False

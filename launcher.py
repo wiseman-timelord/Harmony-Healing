@@ -1,12 +1,12 @@
 """
-launcher.py – Main entry point for Harmonic-Healer.
-Handles startup, dependency checks, initialization, and graceful shutdown.
+launcher.py – Main entry point for Harmony-Healing.
+Handles startup, dependency checks, audio diagnostics, initialization, and graceful shutdown.
 """
 print("Starting Imports...")
 import sys
 import os
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # FIXED: was 'file'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
@@ -15,16 +15,14 @@ def startup():
     # Raise recursion limit BEFORE pywebview starts.
     # pywebview's JS-bridge property-walker traverses the WebView2 COM object
     # tree, which contains circular back-references.  Python's default 1000-frame
-    # limit is too low — it triggers a RecursionError that corrupts bridge setup,
-    # producing the "[pywebview] maximum recursion depth exceeded" log spam and
-    # leaving pywebview.api in a state where API methods are unreachable from JS.
+    # limit is too low — it triggers a RecursionError that corrupts bridge setup.
     sys.setrecursionlimit(5000)
 
-    print("Initializing Harmonic-Healer...")
+    print("Initializing Harmony-Healing...")
     missing = []
     for lib in ("webview", "numpy", "sounddevice"):
         try:
-            __import__(lib)  # FIXED: was import(lib)
+            __import__(lib)
         except ImportError:
             missing.append(lib)
 
@@ -40,21 +38,27 @@ def startup():
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
 
+    # Ensure all page JSONs exist and load persistent config
+    configure.create_default_configs()
     config = configure.load_config()
     print("Configuration loaded successfully.")
+
+    # Device diagnostics at startup (default Windows output selected)
+    configure.print_audio_diagnostics()
+
     print("Starting GUI...\n")
     print("-" * 60)
 
     displays.main_loop(config)
 
     print("-" * 60)
-    print("\n✓ Harmonic-Healer shutdown complete.")
+    print("\n✓ Harmony-Healing shutdown complete.")
     print("  Audio stream: STOPPED")
     print("  Configuration: SAVED")
-    print("  Thank you for using Harmonic-Healer.\n")
+    print("  Thank you for using Harmony-Healing.\n")
 
 
-if __name__ == "__main__":  # FIXED: was 'if name == " main ":'
+if __name__ == "__main__":
     print("Starting main function...")
     try:
         startup()
