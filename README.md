@@ -2,7 +2,9 @@
 Status: Beta - After a few sessions in Claude and Grok, the project is back on track!
 
 ### Description
-A 11th harmonic sound healing application, theoretically capable of causing sonic-obliteration of cancers/fungus, as well as, some useful/important frequencies for healing/meditation.
+A frequency generation program for Windows 10-11, currently covering...
+- The 11th harmonic, theoretically capable of causing sonic-obliteration of cancers/fungus.
+- Some useful/important frequencies for healing/meditation/Sleep.
 
 ### Preview
 - The main window (v0.08)...
