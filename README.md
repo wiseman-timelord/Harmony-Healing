@@ -7,7 +7,7 @@ A frequency generation program for Windows 10-11. For complete features involved
 - Some useful/important frequencies for healing/meditation/Sleep.
 
 ### Preview
-- The main window (v0.08)...
+- The main window. Most recently, the Window size is correct on startup (v0.11)...
 ![image_missing](https://github.com/wiseman-timelord/Harmony-Healing/blob/main/media/main_interface.jpg)
 
 ### Requirements
