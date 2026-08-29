@@ -16,7 +16,7 @@ def menu():
     print_header("Installation")
     print("    1. Purge Install  (remove venv, reinstall everything)")
     print("    2. Check / Install  (fix broken or missing packages)")
-    print("    3. Replace JSON  (reset persistent + viral/fungal/healing defaults)")
+    print("    3. Replace JSON  (reset viral / fungal / healing page defaults)")
     print("=" * 80)
     choice = input("Selection; Menu Options = 1-3, Abandon Install = A: ")
     return choice.strip().upper()
@@ -291,18 +291,14 @@ def ensure_package_init():
 
 # ---------------------------------------------------------------------------
 # JSON config helper — STANDALONE, no project-module imports.
-# Creates persistent.json (window) + viral.json + fungal.json + healing.json
+# Creates only the three per-page files: viral.json, fungal.json, healing.json.
+# Window size is hard-coded in scripts/configure.py (no persistent.json).
 # ---------------------------------------------------------------------------
 def create_json() -> bool:
     """
-    Regenerate data/*.json defaults.
+    Regenerate data/viral.json, fungal.json, healing.json defaults.
     Standalone — does NOT import from scripts.configure.
     """
-    persistent = {
-        "window_width": 884,
-        "window_height": 522,
-        "harmonic_multiplier": 11,
-    }
     viral = {
         "last_freq": 432,
         "volume": 50,           # UI 10–100
@@ -325,7 +321,6 @@ def create_json() -> bool:
     try:
         os.makedirs("data", exist_ok=True)
         files = {
-            "persistent.json": persistent,
             "viral.json": viral,
             "fungal.json": fungal,
             "healing.json": healing,
@@ -335,7 +330,6 @@ def create_json() -> bool:
             with open(path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=4)
             print(f"✓ JSON created: data/{name}")
-        print(f"  window: {persistent['window_width']}×{persistent['window_height']}")
         print(f"  volume default: 50 (0.50 gain)  duration default: 15 min")
         return True
     except Exception as exc:

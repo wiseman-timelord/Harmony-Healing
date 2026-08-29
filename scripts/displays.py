@@ -24,7 +24,6 @@ from . import generator
 class Api:
     def __init__(self):
         self._gen            = generator.SoundGenerator()
-        self._config         = configure.load_config()
         self._viral_cfg      = configure.load_viral_config()
         self._fungal_cfg     = configure.load_fungal_config()
         self._healing_cfg    = configure.load_healing_config()
@@ -41,9 +40,6 @@ class Api:
         self._window = window
 
     # ── Config ────────────────────────────────────────────────────────────────
-    def get_config(self):
-        return self._config
-
     def get_viral_config(self):
         return self._viral_cfg
 
@@ -64,21 +60,6 @@ class Api:
 
     def get_duration_options(self):
         return list(configure.DURATION_OPTIONS)
-
-    def save_config(self, data):
-        configure.save_config(data)
-        self._config = data
-        return {"status": "saved"}
-
-    def save_setting(self, key, value):
-        self._config[key] = value
-        configure.save_config(self._config)
-        return {"status": "saved"}
-
-    def save_window_size(self, width, height):
-        self._config["window_width"]  = max(configure.WINDOW_MIN_WIDTH, int(width))
-        self._config["window_height"] = max(configure.WINDOW_MIN_HEIGHT, int(height))
-        return {"status": "ok"}
 
     def get_constants(self):
         hw = configure.constants
@@ -134,7 +115,7 @@ class Api:
             duration_minutes = configure.duration_minutes_from_index(duration_index)
             play_mode        = params.get("play_mode", "single")
             subset_key       = params.get("subset_key", None)
-            hm               = int(self._config.get("harmonic_multiplier", 11))
+            hm               = int(configure.DEFAULT_HARMONIC_MULTIPLIER)
 
             print(
                 f"Starting {page}: {freq} Hz | {hm}th harmonic: {freq * hm:.0f} Hz | "
@@ -308,14 +289,13 @@ class Api:
     def shutdown(self):
         print("Shutting down Harmony-Healing...")
         self.stop_treatment()
-        configure.save_config(self._config)
-        print("Audio stream stopped. Config saved. Goodbye.")
+        print("Audio stream stopped. Goodbye.")
 
 
 # =============================================================================
 # Main GUI Loop
 # =============================================================================
-def main_loop(config):
+def main_loop():
     api = Api()
 
     # ── Build option lists ────────────────────────────────────────────────────
@@ -354,8 +334,8 @@ def main_loop(config):
     if current_group is not None:
         healing_options += "</optgroup>\n"
 
-    win_w = int(config.get("window_width", configure.WINDOW_WIDTH_DEFAULT))
-    win_h = int(config.get("window_height", configure.WINDOW_HEIGHT_DEFAULT))
+    win_w = configure.WINDOW_WIDTH_DEFAULT
+    win_h = configure.WINDOW_HEIGHT_DEFAULT
 
     # Page configs
     viral_cfg   = api._viral_cfg
@@ -1538,19 +1518,6 @@ def main_loop(config):
             }}).catch(function(){{}});
         }});
 
-        window.addEventListener('resize', (function() {{
-            var t;
-            return function() {{
-                clearTimeout(t);
-                t = setTimeout(function() {{
-                    if (apiReady())
-                        pywebview.api.save_window_size(
-                            document.documentElement.clientWidth,
-                            document.documentElement.clientHeight
-                        );
-                }}, 700);
-            }};
-        }})());
     </script>
 </body>
 </html>"""
@@ -1564,6 +1531,7 @@ def main_loop(config):
             height=win_h,
             resizable=True,
             text_select=True,
+            min_size=(configure.WINDOW_MIN_WIDTH, configure.WINDOW_MIN_HEIGHT),
         )
         api._set_window(window)
 
@@ -1584,6 +1552,7 @@ def main_loop(config):
                     js_api=api,
                     width=win_w,
                     height=win_h,
+                    min_size=(configure.WINDOW_MIN_WIDTH, configure.WINDOW_MIN_HEIGHT),
                 )
                 api._set_window(window)
                 window.events.closing += lambda: api.shutdown() or True

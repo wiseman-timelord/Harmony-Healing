@@ -38,10 +38,9 @@ def startup():
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
 
-    # Ensure all page JSONs exist and load persistent config
+    # Ensure the three per-page JSON files exist (viral / fungal / healing)
     configure.create_default_configs()
-    config = configure.load_config()
-    print("Configuration loaded successfully.")
+    print("Page configuration loaded successfully.")
 
     # Device diagnostics at startup (default Windows output selected)
     configure.print_audio_diagnostics()
@@ -49,12 +48,11 @@ def startup():
     print("Starting GUI...\n")
     print("-" * 60)
 
-    displays.main_loop(config)
+    displays.main_loop()
 
     print("-" * 60)
     print("\n✓ Harmony-Healing shutdown complete.")
     print("  Audio stream: STOPPED")
-    print("  Configuration: SAVED")
     print("  Thank you for using Harmony-Healing.\n")
 
 

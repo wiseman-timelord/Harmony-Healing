@@ -17,7 +17,6 @@ _SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 _BASE_DIR    = os.path.dirname(_SCRIPTS_DIR)
 DATA_DIR     = os.path.join(_BASE_DIR, "data")
 
-CONFIG_PATH          = os.path.join(DATA_DIR, "persistent.json")   # window size, global
 VIRAL_CONFIG_PATH    = os.path.join(DATA_DIR, "viral.json")
 FUNGAL_CONFIG_PATH   = os.path.join(DATA_DIR, "fungal.json")
 HEALING_CONFIG_PATH  = os.path.join(DATA_DIR, "healing.json")
@@ -26,13 +25,13 @@ CONSTANTS_INI_PATH   = os.path.join(DATA_DIR, "constants.ini")
 DEFAULT_HARMONIC_MULTIPLIER = 11
 WAVEFORM_OPTIONS = ["sine"]
 
-# Window size (pywebview), pixels.
-# Defaults are used when no persistent.json exists yet, or a key is missing.
-# Minimums are enforced whenever the window is resized (see displays.Api.save_window_size).
-WINDOW_WIDTH_DEFAULT  = 884
-WINDOW_HEIGHT_DEFAULT = 522
-WINDOW_MIN_WIDTH      = 400
-WINDOW_MIN_HEIGHT     = 300
+# Window size (pywebview), pixels — hard-coded only. No persistent.json / size JSON.
+# These are OUTER window dimensions (title bar + borders included on Windows).
+# min_size is passed to webview.create_window so the OS cannot shrink below them.
+WINDOW_WIDTH_DEFAULT  = 900
+WINDOW_HEIGHT_DEFAULT = 630
+WINDOW_MIN_WIDTH      = 700
+WINDOW_MIN_HEIGHT     = 540
 
 # Discrete duration options (minutes) — slider index 0..5
 DURATION_OPTIONS = [15, 30, 60, 90, 120, 180]
@@ -385,14 +384,8 @@ def _gather_hw_constants() -> dict:
 constants: dict = _gather_hw_constants()
 
 # =============================================================================
-# PAGE CONFIG DEFAULTS
+# PAGE CONFIG DEFAULTS  (only per-tab JSON; no global / window-size JSON)
 # =============================================================================
-_PERSISTENT_DEFAULTS = {
-    "window_width":  WINDOW_WIDTH_DEFAULT,
-    "window_height": WINDOW_HEIGHT_DEFAULT,
-    "harmonic_multiplier": DEFAULT_HARMONIC_MULTIPLIER,
-}
-
 _VIRAL_DEFAULTS = {
     "last_freq":        432,
     "volume":           VOLUME_DEFAULT,   # 10–100
@@ -451,15 +444,6 @@ def _save_json(path: str, data: dict):
         json.dump(data, f, indent=4)
 
 
-def load_config():
-    """Load persistent (window) config. Missing keys filled from defaults."""
-    return _load_json(CONFIG_PATH, _PERSISTENT_DEFAULTS)
-
-
-def save_config(data):
-    _save_json(CONFIG_PATH, data)
-
-
 def load_viral_config():
     return _load_json(VIRAL_CONFIG_PATH, _VIRAL_DEFAULTS)
 
@@ -485,8 +469,7 @@ def save_healing_config(data):
 
 
 def create_default_configs():
-    """Create all default JSON files (used by installer)."""
-    load_config()
+    """Ensure the three per-page JSON files exist (viral / fungal / healing)."""
     load_viral_config()
     load_fungal_config()
     load_healing_config()
