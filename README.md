@@ -2,7 +2,7 @@
 Status: Beta - After a few sessions in Claude and Grok, the project is back on track!
 
 ### Description
-A frequency generation program for Windows 10-11, currently covering...
+A frequency generation program for Windows 10-11. For complete features involved n the program, the user is expected to have a "Plasma Speaker" for proper frequency production. The program is intended currently covering...
 - The 11th harmonic, theoretically capable of causing sonic-obliteration of cancers/fungus.
 - Some useful/important frequencies for healing/meditation/Sleep.
 
