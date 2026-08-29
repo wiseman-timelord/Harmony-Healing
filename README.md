@@ -26,6 +26,7 @@ Here are the instructions...
 ```
 
 ### Structure
+Here is the plan for the current files structure...
 ```
 .\Harmony-Healing\
 ├── Harmony-Healing.bat  (batch menu to launch, installer and launcher)
@@ -42,6 +43,10 @@ Here are the instructions...
     └── fungal.json  (persistent settings for relating page).
     └── healing.json  (persistent settings for relating page).
 ```
+
+### Development
+- Window size needs fitting better, needs a tweak every time the program starts at the moment.
+- Organizing the details on the screen a little better, things can be more logical/compact.
 
 ### Disclaimer
 - This program has set timers, thereabouts its experimental, but the science is not to be under-estimated, so start off with, smaller or calculated, program timers and volume levels.
