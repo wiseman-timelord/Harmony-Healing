@@ -76,8 +76,8 @@ class Api:
         return {"status": "saved"}
 
     def save_window_size(self, width, height):
-        self._config["window_width"]  = max(400, int(width))
-        self._config["window_height"] = max(300, int(height))
+        self._config["window_width"]  = max(configure.WINDOW_MIN_WIDTH, int(width))
+        self._config["window_height"] = max(configure.WINDOW_MIN_HEIGHT, int(height))
         return {"status": "ok"}
 
     def get_constants(self):
@@ -354,8 +354,8 @@ def main_loop(config):
     if current_group is not None:
         healing_options += "</optgroup>\n"
 
-    win_w = int(config.get("window_width", 884))
-    win_h = int(config.get("window_height", 522))
+    win_w = int(config.get("window_width", configure.WINDOW_WIDTH_DEFAULT))
+    win_h = int(config.get("window_height", configure.WINDOW_HEIGHT_DEFAULT))
 
     # Page configs
     viral_cfg   = api._viral_cfg
@@ -603,8 +603,6 @@ def main_loop(config):
             <div class="row">
                 <span class="rl">Virus Type:</span>
                 <select id="viralSelect">{freq_options}</select>
-            </div>
-            <div class="row">
                 <span class="rl">Playback:</span>
                 <div class="mode-switch">
                     <span class="ms-label active" id="vMsSingle">Single</span>
@@ -614,11 +612,18 @@ def main_loop(config):
                     </label>
                     <span class="ms-label inactive" id="vMsSubset">Subset</span>
                 </div>
+            </div>
+            <div class="row">
                 <div class="tl-wrap">
                     <span class="tl-lbl">Duration:</span>
                     <input type="range" id="viralDuration" min="0" max="5" step="1" value="{v_steps}">
                     <span class="val-readout" id="viralDurationVal">{v_mins} min</span>
                     <span id="viralSubsetInfo" class="subset-info"></span>
+                </div>
+                <div class="vol-wrap">
+                    <span class="vol-lbl">Volume:</span>
+                    <input type="range" id="viralVolume" min="10" max="100" step="10" value="{v_vol}">
+                    <span class="val-readout" id="viralVolumeVal">{v_vol / 100:.2f}</span>
                 </div>
             </div>
             <div class="row">
@@ -639,13 +644,6 @@ def main_loop(config):
                 &#9888; Frequency &gt;20 kHz — standard speakers silent. RF / plasma required.
             </div>
             <hr>
-            <div class="row">
-                <div class="vol-wrap">
-                    <span class="vol-lbl">Volume:</span>
-                    <input type="range" id="viralVolume" min="10" max="100" step="10" value="{v_vol}">
-                    <span class="val-readout" id="viralVolumeVal">{v_vol / 100:.2f}</span>
-                </div>
-            </div>
             <div class="canvas-wrap"><canvas id="viralCanvas"></canvas></div>
             <div style="display:flex;gap:14px;justify-content:center;margin:12px 0 10px;">
                 <button class="btn-start" id="viralStart">&#9654;&nbsp; Start Treatment</button>
@@ -659,8 +657,6 @@ def main_loop(config):
             <div class="row">
                 <span class="rl">Fungus Type:</span>
                 <select id="fungalSelect">{fungus_options}</select>
-            </div>
-            <div class="row">
                 <span class="rl">Playback:</span>
                 <div class="mode-switch">
                     <span class="ms-label active" id="fMsSingle">Single</span>
@@ -670,11 +666,18 @@ def main_loop(config):
                     </label>
                     <span class="ms-label inactive" id="fMsSubset">Subset</span>
                 </div>
+            </div>
+            <div class="row">
                 <div class="tl-wrap">
                     <span class="tl-lbl">Duration:</span>
                     <input type="range" class="fungal-range" id="fungalDuration" min="0" max="5" step="1" value="{f_steps}">
                     <span class="val-readout fungal" id="fungalDurationVal">{f_mins} min</span>
                     <span id="fungalSubsetInfo" class="subset-info"></span>
+                </div>
+                <div class="vol-wrap">
+                    <span class="vol-lbl">Volume:</span>
+                    <input type="range" class="fungal-range" id="fungalVolume" min="10" max="100" step="10" value="{f_vol}">
+                    <span class="val-readout fungal" id="fungalVolumeVal">{f_vol / 100:.2f}</span>
                 </div>
             </div>
             <div class="row">
@@ -695,13 +698,6 @@ def main_loop(config):
                 &#9888; Frequency &gt;20 kHz — standard speakers silent. RF / plasma required.
             </div>
             <hr>
-            <div class="row">
-                <div class="vol-wrap">
-                    <span class="vol-lbl">Volume:</span>
-                    <input type="range" class="fungal-range" id="fungalVolume" min="10" max="100" step="10" value="{f_vol}">
-                    <span class="val-readout fungal" id="fungalVolumeVal">{f_vol / 100:.2f}</span>
-                </div>
-            </div>
             <div class="canvas-wrap"><canvas id="fungalCanvas"></canvas></div>
             <div style="display:flex;gap:14px;justify-content:center;margin:12px 0 10px;">
                 <button class="btn-start" id="fungalStart">&#9654;&nbsp; Start Treatment</button>
@@ -715,8 +711,6 @@ def main_loop(config):
             <div class="row">
                 <span class="rl">Preset:</span>
                 <select id="healSelect">{healing_options}</select>
-            </div>
-            <div class="row">
                 <span class="rl">Playback:</span>
                 <div class="mode-switch">
                     <span class="ms-label active" id="hMsSingle">Single</span>
@@ -727,11 +721,18 @@ def main_loop(config):
                     </label>
                     <span class="ms-label inactive" id="hMsSubset">Subset</span>
                 </div>
+            </div>
+            <div class="row">
                 <div class="tl-wrap">
                     <span class="tl-lbl">Duration:</span>
                     <input type="range" class="heal-range" id="healDuration" min="0" max="5" step="1" value="{h_steps}">
                     <span class="val-readout heal" id="healDurationVal">{h_mins} min</span>
                     <span id="healSubsetInfo" class="subset-info"></span>
+                </div>
+                <div class="vol-wrap">
+                    <span class="vol-lbl">Volume:</span>
+                    <input type="range" class="heal-range" id="healVolume" min="10" max="100" step="10" value="{h_vol}">
+                    <span class="val-readout heal" id="healVolumeVal">{h_vol / 100:.2f}</span>
                 </div>
             </div>
             <div class="heal-desc" id="healDesc"></div>
@@ -746,13 +747,6 @@ def main_loop(config):
                 &#9888; Frequency &lt;20 Hz — below standard audible range.
             </div>
             <hr>
-            <div class="row">
-                <div class="vol-wrap">
-                    <span class="vol-lbl">Volume:</span>
-                    <input type="range" class="heal-range" id="healVolume" min="10" max="100" step="10" value="{h_vol}">
-                    <span class="val-readout heal" id="healVolumeVal">{h_vol / 100:.2f}</span>
-                </div>
-            </div>
             <div class="canvas-wrap"><canvas id="healCanvas"></canvas></div>
             <div style="display:flex;gap:14px;justify-content:center;margin:12px 0 10px;">
                 <button class="btn-start" id="healStart">&#9654;&nbsp; Start Healing</button>

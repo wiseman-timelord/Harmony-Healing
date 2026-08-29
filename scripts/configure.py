@@ -26,6 +26,14 @@ CONSTANTS_INI_PATH   = os.path.join(DATA_DIR, "constants.ini")
 DEFAULT_HARMONIC_MULTIPLIER = 11
 WAVEFORM_OPTIONS = ["sine"]
 
+# Window size (pywebview), pixels.
+# Defaults are used when no persistent.json exists yet, or a key is missing.
+# Minimums are enforced whenever the window is resized (see displays.Api.save_window_size).
+WINDOW_WIDTH_DEFAULT  = 884
+WINDOW_HEIGHT_DEFAULT = 522
+WINDOW_MIN_WIDTH      = 400
+WINDOW_MIN_HEIGHT     = 300
+
 # Discrete duration options (minutes) — slider index 0..5
 DURATION_OPTIONS = [15, 30, 60, 90, 120, 180]
 
@@ -380,8 +388,8 @@ constants: dict = _gather_hw_constants()
 # PAGE CONFIG DEFAULTS
 # =============================================================================
 _PERSISTENT_DEFAULTS = {
-    "window_width":  884,
-    "window_height": 522,
+    "window_width":  WINDOW_WIDTH_DEFAULT,
+    "window_height": WINDOW_HEIGHT_DEFAULT,
     "harmonic_multiplier": DEFAULT_HARMONIC_MULTIPLIER,
 }
 
